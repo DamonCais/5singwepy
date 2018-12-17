@@ -1,0 +1,21 @@
+<template>
+  <view class="show_cart">shop_cart</view>
+</template>
+
+<script>
+import wepy from 'wepy';
+
+export default class shopCart extends wepy.page {
+  config = {
+    navigationBarTitleText: 'shop_cart'
+  };
+  data = {};
+  onLoad() {}
+  computed = {};
+  methods = {};
+  events = {};
+}
+</script>
+
+<style>
+</style>

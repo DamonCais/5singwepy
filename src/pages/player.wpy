@@ -1,0 +1,311 @@
+<template>
+  <!-- <view class="container"> -->
+  <view class="player">
+    <image src="{{songDetail.data.user.I}}" class="coverbg">
+    <text class="player-title">{{songName||'暂无歌曲'}}</text>
+    <view class="player-lrc">
+      <scroll-view scroll-y class="lrc-items" scroll-into-view="{{toView}}">
+        <view wx:for="{{lrcObj}}" id="ly{{key}}" wx:for-index="key">
+          <text>{{item}}</text>
+        </view>
+      </scroll-view>
+    </view>
+    <view class="player-steps">
+      <view class="slider-time">{{_currentTime}}</view>
+      <view class="slider">
+        <slider
+          block-size="14"
+          @changing="sliderChanging"
+          @change="sliderChange"
+          value="{{currentValue}}"
+          min="0"
+          max="100"
+        />
+      </view>
+      <view class="slider-time">{{_duration}}</view>
+    </view>
+    <view class="player-btns">
+      <wux-icon size="30" @tap="recycle" wx:if="{{isRecycle}}" type="ios-repeat"/>
+      <wux-icon size="30" @tap="recycle" wx:if="{{!isRecycle}}" type="ios-shuffle"/>
+      <wux-icon size="30" @tap="palyBefore" type="ios-skip-backward"/>
+      <view style="width:60rpx;text-align:center;">
+        <wux-icon size="30" @tap="play" wx:if="{{!_isPlaying}}" type="ios-play-circle"/>
+        <wux-icon size="30" @tap="pause" wx:if="{{_isPlaying}}" type="ios-pause"/>
+      </view>
+      <wux-icon size="30" @tap="playAfter" type="ios-skip-forward"/>
+      <wux-icon size="30" type="ios-list"/>
+    </view>
+  </view>
+  <!-- </view> -->
+</template>
+
+<script>
+import wepy from 'wepy';
+import api from '@/api/api';
+import tip from '@/utils/tip';
+
+import { getLyList } from '@/utils/util';
+export default class player extends wepy.page {
+  config = {
+    navigationBarTitleText: 'player',
+    usingComponents: {
+      'wux-icon': '../wux/icon/index',
+
+      'wux-floating-button': '../wux/floating-button/index'
+    }
+  };
+
+  data = {
+    songId: '',
+    songName: '',
+    songDetail: '',
+    lrcObj: {},
+    toView: 'ly1',
+    duration: 0,
+    _duration: '00:00',
+    currentTime: 0,
+    _currentTime: '00:00',
+    currentValue: 0,
+    innerAudioContext: null,
+    times: [],
+    sliderBinded: false,
+    _isPlaying: false,
+    isRecycle: false
+  };
+  async onLoad() {
+    this.playerInit();
+  }
+  async onShow() {
+    if (!this.songId) {
+      this.playerInit();
+    }
+  }
+
+  async playerInit(songId) {
+    let arr = wepy.getStorageSync('songList');
+    if (arr && arr.length) {
+      this.songId = wepy.getStorageSync('currentSong') || arr[0];
+    } else {
+      tip.toast('请先添加音乐');
+      return;
+    }
+    let id = this.songId.split('#song-')[1];
+    this.songName = this.songId.split('#song-')[0];
+    await this.getSongDetailById(id);
+    setTimeout(() => {
+      this.playMusic();
+    }, 200);
+  }
+  async getSongDetailById(id) {
+    let obj = {};
+    obj.query = {
+      songId: id.split('-')[1],
+      type: id.split('-')[0]
+    };
+    let res = await api.get(`/getSongDetailById`, obj);
+    this.songDetail = res.data;
+    this.lrcObj = getLyList(res.data.lrc);
+    this.$apply();
+  }
+  sliderTap(e) {
+    console.log(e);
+  }
+  sliderChanging(e) {
+    console.log('sliderChanging');
+    if (this.innerAudioContext && !this.innerAudioContext.paused) {
+      this.innerAudioContext.pause();
+    }
+    // if (!this.sliderBinded) {
+    //   this.innerAudioContext.pause();
+    // }
+    // this.sliderBinded=true;
+  }
+  sliderChange(e) {
+    console.log(e);
+    // this.sliderBinded = false;
+
+    if (this.innerAudioContext && this.innerAudioContext.paused) {
+      this.innerAudioContext.play();
+    }
+    this.innerAudioContext.seek((this.duration * e.detail.value) / 100);
+    this.currentValue = e.detail.value;
+    this.$apply();
+    setTimeout(() => {
+      // this.innerAudioContext.play();
+      this._updateTime();
+    }, 200);
+  }
+  recycle() {
+    this.isRecycle = !this.isRecycle;
+    this.$apply();
+  }
+  pause() {
+    this._isPlaying = false;
+    this.innerAudioContext.pause();
+    this.$apply();
+  }
+  palyBefore() {
+    this.playerDestory();
+
+    this._isPlaying = true;
+    let arr = wepy.getStorageSync('songList');
+    let index = arr.findIndex(id => id == this.songId);
+    index = (index - 1 + arr.length) % arr.length;
+    wepy.setStorageSync('currentSong', arr[index]);
+    this.playerInit();
+  }
+  playAfter() {
+    this.playerDestory();
+
+    this._isPlaying = true;
+
+    let arr = wepy.getStorageSync('songList');
+    let index = arr.findIndex(id => id == this.songId);
+    index = (index + 1) % arr.length;
+    wepy.setStorageSync('currentSong', arr[index]);
+    this.playerInit();
+  }
+  play() {
+    this._isPlaying = true;
+    if (!this.innerAudioContext) {
+      this.playerInit();
+    } else {
+      this.innerAudioContext.play();
+    }
+    this.$apply();
+  }
+  playerDestory() {
+    tip.loading();
+    if (this.innerAudioContext) {
+      this.innerAudioContext.destroy();
+    }
+  }
+  async playMusic() {
+    this.playerDestory();
+    this.innerAudioContext = null;
+    this.currentValue = 0;
+    // this.isPlaying = true;
+    this.times = Object.keys(this.lrcObj);
+    this.innerAudioContext = wepy.createInnerAudioContext();
+    this.innerAudioContext.autoplay = this._isPlaying;
+    // this.innerAudioContext.src = `https://www.jycais.cn/getMp3?url=${this.songDetail.data.squrl || this.songDetail.data.lqurl}`;
+    this.innerAudioContext.src =
+      this.songDetail.data.squrl || this.songDetail.data.lqurl;
+    let that = this;
+    this.innerAudioContext.onCanplay(() => {
+      this._currentTime = '00:00';
+
+      this.$apply();
+      tip.loaded();
+
+      setTimeout(() => {
+        that.duration = that.innerAudioContext.duration; //类似初始化-必须触发-不触发此函数延时也获取不到
+        that._duration = that.parserTime(that.duration);
+        console.log(that._duration);
+        that.$apply();
+      }, 500);
+    });
+    this.innerAudioContext.onPlay(() => {
+      console.log('开始播放');
+    });
+    this.innerAudioContext.onError(res => {
+      console.log(res.errMsg);
+    });
+    this.innerAudioContext.onTimeUpdate(() => {
+      this._updateTime();
+    });
+    this.innerAudioContext.onEnded(() => {
+      let arr = wepy.getStorageSync('songList');
+      let index = arr.findIndex(id => id == this.songId);
+      index = (index + 1) % arr.length;
+      wepy.setStorageSync('currentSong', arr[index]);
+      this.playerInit();
+    });
+    this.$apply();
+  }
+  _updateTime() {
+    if (this.innerAudioContext && this.innerAudioContext.paused) {
+      return;
+    }
+
+    this.currentTime = this.innerAudioContext.currentTime;
+    this.currentValue = Math.round((this.currentTime / this.duration) * 100);
+    this._currentTime = this.parserTime(this.currentTime);
+
+    this.$apply();
+    for (var i = 0; i < this.times.length; i++) {
+      if (
+        this.innerAudioContext.currentTime > Number(this.times[i]) &&
+        this.innerAudioContext.currentTime < this.times[i + 1]
+      ) {
+        this.toView = `ly${this.times[i]}`;
+        this.$apply();
+        break;
+      }
+    }
+  }
+  parserTime(time) {
+    let min = `0${parseInt(time / 60)}`.substr(-2);
+    let sec = `0${parseInt(time % 60)}`.substr(-2);
+    return `${min}:${sec}`;
+  }
+  computed = {};
+  methods = {
+    toView() {}
+  };
+  events = {};
+}
+</script>
+
+<style lang="less">
+.coverbg {
+  filter: blur(35px);
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 750rpx;
+  height: 1334rpx;
+  z-index: -2;
+  display: block;
+}
+.player {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  // background: #999;
+  .player-title {
+    text-align: center;
+    line-height: 100rpx;
+  }
+  .player-lrc {
+    flex-grow: 1;
+
+    overflow-y: auto;
+    display: flex;
+    .lrc-items {
+      padding: 20rpx;
+      flex: 1;
+      text-align: center;
+    }
+  }
+  .player-steps,
+  .player-btns {
+    height: 100rpx;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    box-sizing: border-box;
+    .slider-time {
+      min-width: 40px;
+    }
+    .slider {
+      flex-grow: 2;
+      padding: 0 10rpx;
+    }
+  }
+}
+</style>

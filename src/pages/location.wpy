@@ -1,0 +1,21 @@
+<template>
+  <view class="location">网点列表</view>
+</template>
+
+<script>
+import wepy from 'wepy';
+
+export default class location extends wepy.page {
+  config = {
+    navigationBarTitleText: '网点列表'
+  };
+  data = {};
+  onLoad() {}
+  computed = {};
+  methods = {};
+  events = {};
+}
+</script>
+
+<style>
+</style>

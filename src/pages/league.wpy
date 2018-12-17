@@ -1,0 +1,29 @@
+<template>
+  <view></view>
+</template>
+
+<script>
+import wepy from 'wepy';
+export default class league extends wepy.page {
+  config = {
+    navigationBarTitleText: 'league',
+    usingComponents: {
+      'wux-button': '../wux/button/index'
+    }
+  };
+  components = {};
+
+  data = {};
+
+  computed = {};
+
+  methods = {};
+
+  events = {};
+
+  onLoad() {}
+}
+</script>
+
+<style>
+</style>

@@ -1,0 +1,50 @@
+<template>
+  <view class="regiest">
+    <van-cell-group>
+      <van-field
+        value="{{ phone }}"
+        center
+        clearable
+        placeholder="请输入手机号"
+        border="{{ false }}"
+        use-button-slot
+      >
+        <van-button slot="button" size="small" type="primary">发送验证码</van-button>
+      </van-field>
+      <van-field value="{{ sms }}" placeholder="请输入验证码" border="{{ false }}"/>
+      <view class="p-20">
+        <van-button round type="primary" size="large">绑定手机</van-button>
+      </view>
+    </van-cell-group>
+  </view>
+</template>
+
+<script>
+import wepy from 'wepy';
+
+export default class regiest extends wepy.page {
+  config = {
+    navigationBarTitleText: '绑定手机号',
+    usingComponents: {
+      'van-cell-group': '../components/van/cell-group/index',
+      'van-button': '../components/van/button/index',
+
+      'van-field': '../components/van/field/index'
+    }
+  };
+  data = {
+    phone: '',
+    sms: ''
+  };
+  onLoad() {}
+  computed = {};
+  methods = {};
+  events = {};
+}
+</script>
+
+<style lang="less">
+.regiest {
+  padding: 100rpx 20rpx;
+}
+</style>

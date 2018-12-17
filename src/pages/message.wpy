@@ -1,0 +1,99 @@
+<template>
+  <view class="pv-20">
+    <!-- <wux-tabs controlled current="{{ current }}" @change="tabChange">
+      <wux-tab key="tab1">
+        <wux-badge count="3">消息1</wux-badge>
+      </wux-tab>
+      <wux-tab key="tab2">
+        <wux-badge count="1024">消息2</wux-badge>
+      </wux-tab>
+      <wux-tab key="tab3" >
+        <wux-badge dot>消息 3</wux-badge>
+      </wux-tab>
+    </wux-tabs>-->
+    <wux-tabs wux-class="bordered" controlled current="{{ current }}" @change="onTabsChange">
+      <block wx:for="{{ tabs }}" wx:key="key">
+        <wux-tab key="{{ item.key }}">
+          <wux-badge count="{{item.count}}">{{item.title}}</wux-badge>
+        </wux-tab>
+      </block>
+    </wux-tabs>
+    <view class="tab">{{current}}</view>
+  </view>
+</template>
+
+<script>
+import wepy from 'wepy';
+export default class message extends wepy.page {
+  config = {
+    navigationBarTitleText: 'message',
+    usingComponents: {
+      'wux-button': '../wux/button/index',
+      'wux-tabs': '../wux/tabs/index',
+      'wux-tab': '../wux/tab/index',
+      'wux-badge': '../wux/badge/index'
+    }
+  };
+  components = {};
+
+  data = {
+    current: 'tab1',
+    currentIndex: 0,
+    tabs: [
+      {
+        key: 'tab1',
+        title: '消息 1',
+        count: 3,
+        content: 'Content of tab 1'
+      },
+      {
+        key: 'tab2',
+        title: '消息 2',
+
+        content: 'Content of tab 2'
+      },
+      {
+        key: 'tab3',
+        title: '消息 3',
+        count: 3,
+
+        content: 'Content of tab 3'
+      }
+    ]
+  };
+
+  computed = {};
+
+  methods = {
+    onTabsChange(e) {
+      console.log('onTabsChange', e);
+      const { key } = e.detail;
+      const index = this.data.tabs.map(n => n.key).indexOf(key);
+      this.current = key;
+      this.currentIndex = index;
+      this.$apply();
+    },
+    onSwiperChange(e) {
+      console.log('onSwiperChange', e);
+      const { current: index, source } = e.detail;
+      const { key } = this.data.tabs[index];
+      this.current = key;
+      this.currentIndex = index;
+      this.$apply();
+    }
+  };
+
+  events = {};
+
+  onLoad(options) {
+    console.log(options);
+    let { tab } = options;
+    this.current = `tab${tab}`;
+    this.currentIndex = tab - 1 || 0;
+    this.$apply();
+  }
+}
+</script>
+
+<style>
+</style>

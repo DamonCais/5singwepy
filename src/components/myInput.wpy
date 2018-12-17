@@ -1,0 +1,44 @@
+
+<template>
+  <view>
+    <block wx:for="{{form}}" wx:for-index="key">
+      <!-- <wux-cell hover-class="none" title="{{item.label}}" extra="{{item.value}}"></wux-cell> -->
+      <wux-cell hover-class="none">
+        <wux-input
+          @confirm="onConfirm"
+          data-key="{{key}}"
+          label="{{item.label}}"
+          controlled
+          value="{{item.value}}"
+        />
+      </wux-cell>
+    </block>
+    <!-- <wux-cell wx:if="{{isEdit}}" hover-class="none">
+
+      <wux-input @confirm="onConfirm" label="{{label}}" controlled value="{{value}}"/>
+    </wux-cell>
+    <wux-cell wx:if="{{!isEdit}}" hover-class="none" title="{{label}}" extra="{{value}}"></wux-cell>-->
+  </view>
+</template>
+<script>
+import wepy from 'wepy';
+
+export default class myInput extends wepy.component {
+  props = {
+    form: {
+      type: Object,
+      twoWay: true
+    }
+  };
+  methods = {
+    onConfirm(e) {
+      console.log(e);
+      let { value } = e.detail;
+      let { key } = e.target.dataset;
+      this.form[key].value = value;
+      console.log(this.form);
+      this.$parent.$apply();
+    }
+  };
+}
+</script>

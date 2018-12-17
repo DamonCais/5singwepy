@@ -1,0 +1,19 @@
+<template></template>
+
+<script>
+import wepy from "wepy";
+
+export default class vip extends wepy.page {
+  config = {
+    navigationBarTitleText: "会员"
+  };
+  data = {};
+  onLoad() {}
+  computed = {};
+  methods = {};
+  events = {};
+}
+</script>
+
+<style>
+</style>

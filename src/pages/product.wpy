@@ -1,0 +1,231 @@
+<template>
+  <view>
+    <!-- 定位 -->
+    <view class="flex justify-space-between mb-20 bg-white p-20">
+      <view @tap="tapLocation" class="flex align-center" style="flex-grow:1;">
+        <wux-icon class="mr-20" type="ios-pin"/>
+        <text class="wux-ellipsis" style="width:300rpx">{{location.address||'第一营业点'}}</text>
+      </view>
+      <wux-icon @tap="tapScan" type="ios-qr-scanner"/>
+    </view>
+    <wux-cell-group title="电瓶">
+      <!-- <wux-media thumb="http://pbqg2m54r.bkt.clouddn.com/logo.png">
+        <view class="flex column justify-space-between pv-20">
+          <text class="wux-ellipsis">电瓶信息</text>
+          <text class="wux-ellipsis">状态：良好</text>
+        </view>
+      </wux-media>-->
+
+      <view class="p-20">暂无电瓶</view>
+    </wux-cell-group>
+    <wux-cell-group title="电动车">
+      <!-- <wux-media thumb="http://pbqg2m54r.bkt.clouddn.com/logo.png">
+        <view class="flex justify-space-between pv-20">
+          <text class="wux-ellipsis">电动车信息</text>
+          <text class="wux-ellipsis">状态：被盗</text>
+        </view>
+      </wux-media>-->
+
+      <view class="p-20">暂无车辆信息
+        <wux-button block size="small" @tap="tapRentCar" type="positive">马上租车</wux-button>
+      </view>
+      <view wx:if="{{showCarList}}">
+        <view class="mb-20">
+          <wux-filterbar items="{{ items }}" @change="filterChange"/>
+        </view>
+        <wux-media
+          wx:for="{{carList}}"
+          thumb="http://pbqg2m54r.bkt.clouddn.com/logo.png"
+          thumb-style="border-radius: 50%"
+        >
+          <view class="flex justify-space-between pv-20">
+            <text class="wux-ellipsis">{{item.name}}</text>
+            <text class="wux-ellipsis">{{item.price}}</text>
+          </view>
+        </wux-media>
+      </view>
+    </wux-cell-group>
+    <wux-popup
+      closable
+      visible="{{ locationPop }}"
+      title="定位"
+      content="请求获取定位权限"
+      @close="onCloseLocationPop"
+    >
+      <wux-button openType="openSetting" @opensetting="onOpenSetting" block type="balanced">确认</wux-button>
+    </wux-popup>
+  </view>
+</template>
+
+<script>
+import wepy from 'wepy';
+import tip from '@/utils/tip';
+import {
+  FILTER_LIST,
+  SYSTEM_INFO,
+  USER_SPECICAL_INFO,
+  USER_INFO
+} from '@/utils/constant';
+
+export default class home extends wepy.page {
+  config = {
+    navigationBarTitleText: 'home',
+    navigationBarBackgroundColor: '#ffc900',
+    backgroundColor: '#ffc900',
+    usingComponents: {
+      'wux-accordion-group': '../wux/accordion-group/index',
+      'wux-accordion': '../wux/accordion/index',
+      'wux-popup': '../wux/popup/index',
+      'wux-button': '../wux/button/index',
+      'wux-icon': '../wux/icon/index',
+      'wux-badge': '../wux/badge/index',
+      'wux-card': '../wux/card/index',
+      'wux-filterbar': '../wux/filterbar/index',
+      'wux-cell-group': '../wux/cell-group/index',
+      'wux-cell': '../wux/cell/index',
+      'wux-search-bar': '../wux/search-bar/index',
+      'wux-popover': '../wux/popover/index',
+      'wux-media': '../wux/media/index'
+    }
+  };
+  components = {};
+
+  data = {
+    showCarList: false,
+    hasMore: true,
+    authSetting: {},
+    locationPop: false,
+    swiperList: [
+      { img: 'https://j-image.missfresh.cn/img_20181114145542681.jpg' },
+      { img: 'https://j-image.missfresh.cn/img_20181114145542681.jpg' }
+    ],
+    carList: [],
+    carList0: [
+      { name: '电动车1', price: '700/月', distanceText: '700m' },
+      { name: '电动车2', price: '800/月', distanceText: '800m' },
+      { name: '电动车3', price: '900/月', distanceText: '1.4km' }
+    ],
+    carList1: [
+      { name: '电动车6', price: '1800/月', distanceText: '1.8km' },
+      { name: '电动车5', price: '1600/月', distanceText: '1.6km' },
+      { name: '电动车4', price: '1500/月', distanceText: '1.5km' }
+    ],
+    location: {},
+    items: []
+  };
+
+  computed = {};
+
+  methods = {
+    tapRentCar() {
+      this.showCarList = true;
+      this.$apply();
+    },
+    onOpenSetting(e) {
+      this.locationPop = false;
+      this.$apply();
+      this.authSetting = e.detail.authSetting;
+      if (e.detail.authSetting['scope.userLocation']) {
+        this._getLocation();
+      }
+    },
+    onCloseLocationPop(e) {
+      this.locationPop = false;
+      this.$apply();
+    },
+    async tapLocation(e) {
+      try {
+        if (!this.authSetting['scope.userLocation']) {
+          this.locationPop = true;
+          this.$apply();
+          return;
+        }
+        let res = await wepy.chooseLocation();
+        console.log(res);
+        this.location = res;
+        this.$apply();
+      } catch (error) {}
+    },
+    filterChange(e) {
+      const { checkedItems, items } = e.detail;
+      checkedItems.forEach(n => {
+        if (n.checked) {
+          if (n.sort === 1) {
+            this.carList = this.carList.sort((a, b) => b.distance - a.distance);
+          } else {
+            this.carList = this.carList.sort((a, b) => a.distance - b.distance);
+          }
+          if (this.carList.length === 3) {
+            this.carList = n.sort === 1 ? this.carList0 : this.carList1;
+          }
+          this.$apply();
+        }
+      });
+      console.log(e);
+    },
+    tapSearchBar(e) {
+      wepy.navigateTo({ url: '/pages/search' });
+    },
+    tapMessage(e) {
+      console.log(e.currentTarget.dataset.id);
+      let id = e.currentTarget.dataset.id;
+      wepy.navigateTo({ url: '/pages/message?tab=' + id });
+    },
+    async tapScan(e) {
+      try {
+        let res = await wepy.scanCode({
+          onlyFromCamera: false //是否只能从相机扫码，不允许从相册选择图片,
+        });
+        console.log(res.result);
+      } catch (error) {
+        console.log(error);
+      }
+    },
+    tapLoadMore() {
+      this.carList = [...this.carList0, ...this.carList1].sort(
+        (a, b) => a.distance - b.distance
+      );
+      this.hasMore = false;
+      this.$apply();
+    }
+  };
+
+  events = {};
+
+  onLoad() {
+    this.carList = this.carList0;
+    console.log(FILTER_LIST);
+    this.items = FILTER_LIST;
+    this.getLocation();
+  }
+  async _getLocation() {
+    try {
+      let res = await wepy.getLocation({
+        type: 'gcj02' //默认为 wgs84 返回 gps 坐标，gcj02 返回可用于wepy.chooseLocation的坐标,
+      });
+      this.location = Object.assign(this.location, res);
+      console.log(res);
+    } catch (error) {}
+  }
+  async getLocation() {
+    let res = await wepy.getSetting();
+    this.authSetting = res.authSetting;
+    if (res.authSetting['scope.userLocation']) {
+      this._getLocation();
+    } else if (res.authSetting['scope.userLocation'] == undefined) {
+      try {
+        wepy.authorize({
+          scope: 'scope.userLocation'
+        });
+        this._getLocation();
+      } catch (error) {}
+    } else {
+      this.locationPop = true;
+      this.$apply();
+    }
+  }
+}
+</script>
+
+<style>
+</style>

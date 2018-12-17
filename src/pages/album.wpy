@@ -1,0 +1,244 @@
+<template>
+  <view class="album">
+    <view class="album-info">
+      <image src="{{album.img}}" alt="">
+      <view class="album-title">
+        <text>{{album.title}}</text>
+        <text>创建者: {{album.userName}}</text>
+        <text>{{album.normalInfo}}</text>
+      </view>
+    </view>
+    <wux-cell title="歌单歌曲(共{{songLen}}首)"/>
+    <wux-cell wx:if="{{!isEdit}}" border="{{false}}">
+      <view @tap="playAll" class="flex align-center">
+        <text class="wux-cell-text">播放全部</text>
+      </view>
+      <text @tap="edit" slot="footer">编辑</text>
+    </wux-cell>
+    <wux-cell wx:if="{{isEdit}}" border="{{false}}">
+      <view @tap="addToMylist" class="flex align-center">
+        <text class="wux-cell-text">加入歌单</text>
+      </view>
+      <text @tap="unedit" slot="footer">完成</text>
+    </wux-cell>
+    <wux-checkbox-group @change="allChange" wx:if="{{isEdit}}" value="{{ checkAll }}">
+      <wux-checkbox title="全选" value="checkAll"></wux-checkbox>
+    </wux-checkbox-group>
+    <view class="album-list">
+      <scroll-view scroll-y class="album-items">
+        <wux-cell-group wx:if="{{!isEdit}}">
+          <wux-cell
+            wx:for="{{album.songList}}"
+            key="index"
+            clickable
+            data-id="{{item.id}}"
+            title="{{item.title}}"
+            label="{{item.soner}}"
+          >
+            <text slot="icon">{{index}}</text>
+          </wux-cell>
+        </wux-cell-group>
+        <wux-checkbox-group @change="itemChange" wx:if="{{isEdit}}" value="{{result}}">
+          <wux-checkbox
+            wx:for="{{album.songList}}"
+            title="{{item.title}}"
+            label="{{item.soner}}"
+            value="{{item.id}}"
+          />
+        </wux-checkbox-group>
+      </scroll-view>
+    </view>
+  </view>
+</template>
+
+<script>
+import wepy from 'wepy';
+import api from '@/api/api';
+import tip from '@/utils/tip';
+
+export default class songlist extends wepy.page {
+  config = {
+    navigationBarTitleText: 'songlist',
+    usingComponents: {
+      'wux-checkbox-group': '../wux/checkbox-group/index',
+      'wux-checkbox': '../wux/checkbox/index',
+      'wux-icon': '../wux/icon/index',
+
+      'wux-cell-group': '../wux/cell-group/index',
+      'wux-cell': '../wux/cell/index'
+    }
+  };
+  data = {
+    active: 0,
+    albumId: '',
+    album: {},
+    songLen: 0,
+    result: [],
+    isEdit: false,
+    songList: [],
+    extList: []
+  };
+  onLoad(option) {
+    this.albumId = option.id;
+    this.getSongListByalbumId();
+    this.songList = wepy.getStorageSync('songList') || [];
+  }
+  onShow(option) {
+    console.log(option);
+  }
+  async getSongListByalbumId() {
+    let obj = {};
+    obj.query = {
+      albumId: this.albumId
+    };
+    let res = await api.get(`/getSongListByalbumId`, obj);
+    this.album = res.data;
+    this.songLen = this.album.songList.length;
+    this.album.songList.forEach(item => {
+      item.id = `${item.title}#${item.songId}`;
+    });
+    let arr = this.album.songList.filter(
+      item => this.songList.indexOf(item.id) != -1
+    );
+    let currentMap = [];
+    this.album.songList.map(item => {
+      currentMap.push(item.id);
+    });
+    this.extList = this.songList.filter(item => currentMap.indexOf(item) == -1);
+    this.result = [];
+    arr.map(item => {
+      this.result.push(item.id);
+    });
+    this.$apply();
+    console.log(this.album);
+  }
+  computed = {
+    checkAll() {
+      if (this.album.songList && this.album.songList.length) {
+        return this.result.length === this.album.songList.length
+          ? ['checkAll']
+          : [];
+      } else {
+        return [];
+      }
+    }
+  };
+  methods = {
+    allChange(e) {
+      console.log(e);
+      const { checked } = e.detail;
+      if (checked) {
+        let arr = [];
+        this.album.songList.map(item => {
+          arr.push(item.id);
+        });
+
+        this.result = arr;
+      } else {
+        this.result = [];
+      }
+
+      this.$apply();
+    },
+    itemChange(e) {
+      const { value } = e.detail;
+      const data = this.result;
+      const index = data.indexOf(value);
+      const current =
+        index === -1 ? [...data, value] : data.filter(n => n !== value);
+      this.result = current;
+      this.$apply();
+    },
+    edit() {
+      this.isEdit = true;
+    },
+    unedit() {
+      let arr = this.extList.concat(this.result);
+      wepy.setStorageSync('songList', arr);
+      tip.toast('添加成功');
+      this.isEdit = false;
+      },
+    addToMylist() {
+      let arr = this.extList.concat(this.result);
+      wepy.setStorageSync('songList', arr);
+      tip.toast('添加成功');
+      this.isEdit = false;
+    },
+    playAll() {
+      let arr = [];
+      this.album.songList.map(item => {
+        arr.push(item.id);
+      });
+      this.result = arr;
+      let arr = this.extList.concat(this.result);
+      wepy.setStorageSync('songList', arr);
+      wepy.switchTab({ url: '/pages/player' });
+      
+
+
+      },
+    toggleAll() {
+      let arr = [];
+      this.album.songList.map(item => {
+        arr.push(item.id);
+      });
+      this.result = arr;
+    },
+    toggle(event) {
+      const { id } = event.currentTarget.dataset;
+      if (this.result.findIndex(n => n === id) === -1) {
+        this.result.push(id);
+      } else {
+        this.result = this.result.filter(n => n !== id);
+      }
+    },
+    onChange(event) {
+      this.setData({
+        result: event.detail
+      });
+    }
+  };
+  events = {};
+}
+</script>
+
+<style lang="less">
+.album {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  box-sizing: border-box;
+  .album-info {
+    flex-shrink: 0;
+    display: flex;
+    justify-content: space-around;
+    padding: 10px;
+    box-sizing: border-box;
+    font-size: 14px;
+    height: 350rpx;
+    width: 100%;
+    image {
+      width: 300rpx;
+      height: 300rpx;
+    }
+    .album-title {
+      width: 450rpx;
+      display: flex;
+      justify-content: flex-start;
+      flex-direction: column;
+      padding: 0 10px;
+      box-sizing: border-box;
+    }
+  }
+  .album-list {
+    flex-grow: 1;
+    flex-shrink: 1;
+    background-color: #000;
+    overflow-y: auto;
+    display: flex;
+    .album-items {
+      flex: 1;
+    }
+  }
+}
+</style>

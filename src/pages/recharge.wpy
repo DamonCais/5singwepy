@@ -1,0 +1,31 @@
+<template>
+  <view >
+    
+  </view>
+</template>
+
+<script>
+import wepy from 'wepy';
+export default class recharge extends wepy.page {
+  config = {
+    navigationBarTitleText: 'recharge',
+    usingComponents: {
+      'wux-button': '../wux/button/index'
+    }
+  };
+  components = {};
+
+  data = {};
+
+  computed = {};
+
+  methods = {};
+
+  events = {};
+
+  onLoad() {}
+}
+</script>
+
+<style>
+</style>

@@ -1,0 +1,167 @@
+<template>
+  <view class="songlist">
+    <view class="songlist-info">
+      <image src="{{userInfo.avatarUrl}}" alt="">
+      <view class="songlist-title">
+        <text>{{userInfo.nickName}}</text>
+      </view>
+    </view>
+    <van-cell>
+      <view @tap="playAll" slot="title">
+        <text class="van-cell-text">播放全部</text>
+      </view>
+              <van-icon slot="right-icon" name="play" class="van-cell__right-icon"/>
+
+      <!-- <text @tap="edit">编辑</text> -->
+    </van-cell>
+    <view class="songlist-list">
+      <van-cell @tap="play" data-id="{{item.id}}" wx:for="{{songList}}" title="{{item.title}}">
+        <text slot="icon">{{index}}</text>
+        <van-icon slot="right-icon" name="play" class="van-cell__right-icon"/>
+      </van-cell>
+    </view>
+            <wux-floating-button buttons="{{buttons}}" @click="tapFloatingBtn" position="topRight" theme="balanced"/>
+
+  </view>
+</template>
+
+<script>
+import wepy from 'wepy';
+import api from '@/api/api';
+import tip from '@/utils/tip';
+import { icon,SYSTEM_INFO, USER_SPECICAL_INFO, USER_INFO } from '@/utils/constant';
+
+export default class songlist extends wepy.page {
+  config = {
+    navigationBarTitleText: 'songlist',
+    usingComponents: {
+      'van-cell': '../components/van/cell/index',
+      'van-cell-group': '../components/van/cell-group/index',
+      'van-button': '../components/van/button/index',
+      'van-card': '../components/van/card/index',
+      'van-icon': '../components/van/icon/index',
+      'van-checkbox': '../components/van/checkbox/index',
+      'van-checkbox-group': '../components/van/checkbox-group/index',
+
+      'van-swipe-cell': '../components/van/swipe-cell/index',
+                          "wux-floating-button": "../components/wux/floating-button/index"
+
+    }
+  };
+  data = {
+            buttons: [
+            {
+                label: 'player',
+                icon
+            },
+            {
+                label: 'home',
+                icon
+            },
+        ],
+    active: 0,
+    songlistId: '',
+    songlist: {},
+    songLen: 0,
+    result: [],
+    isEdit: false,
+    songList: [],
+    extList: [],
+    userInfo: {}
+  };
+  onLoad(option) {
+    let userInfo = wepy.getStorageSync(USER_INFO);
+    this.userInfo = userInfo;
+    let arr = wepy.getStorageSync('songList');
+    let songList = [];
+    arr.map(item => {
+      songList.push({
+        title: item.split('#song-')[0],
+        id: item
+      });
+    });
+    this.songList = songList;
+    this.$apply(); 
+  }
+  onShow(option) {
+    let userInfo = wepy.getStorageSync(USER_INFO);
+    this.userInfo = userInfo;
+    let arr = wepy.getStorageSync('songList');
+    let songList = [];
+    arr.map(item => {
+      songList.push({
+        title: item.split('#song-')[0],
+        id: item
+      });
+    });
+    this.songList = songList;
+    this.$apply();  }
+  computed = {};
+tapFloatingBtn(e){
+  let {index} = e.detail;
+  if(index){
+    wepy.switchTab({ url: '/pages/home' });
+  }else{
+    wepy.switchTab({ url: '/pages/player' });
+    
+  }
+
+}
+  methods = {
+    play(e) {
+      console.log(e.currentTarget.dataset.id);
+      let id = e.currentTarget.dataset.id;
+      wepy.switchTab({ url: '/pages/player?id=' + id });
+    },
+    playAll(e){
+      console.log(e);
+    },
+    edit(e){
+      console.log(e);
+    }
+  };
+  events = {};
+}
+</script>
+
+<style lang="less">
+.songlist {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  box-sizing: border-box;
+  .songlist-info {
+    flex-shrink: 0;
+    display: flex;
+    justify-content: space-around;
+    padding: 10px;
+    box-sizing: border-box;
+    font-size: 14px;
+    height: 350rpx;
+    width: 100%;
+    image {
+      width: 300rpx;
+      height: 300rpx;
+    }
+    .songlist-title {
+      width: 450rpx;
+      display: flex;
+      justify-content: flex-start;
+      flex-direction: column;
+      padding: 0 10px;
+      box-sizing: border-box;
+    }
+  }
+  .songlist-list {
+    flex-grow: 1;
+    flex-shrink: 1;
+    background-color: #000;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    .songlist-items {
+      flex: 1;
+    }
+  }
+}
+</style>

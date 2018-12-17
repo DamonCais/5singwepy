@@ -1,0 +1,93 @@
+
+<template>
+  <view>
+    <wux-select id="wux-select1"/>
+    <block wx:for="{{form}}" wx:for-index="key">
+      <!-- <wux-cell hover-class="none" title="{{item.label}}" extra="{{item.value}}"></wux-cell> -->
+      <wux-cell wx:if="{{!item.type}}" hover-class="none">
+        <wux-input
+          @confirm="onConfirm"
+          data-key="{{key}}"
+          label="{{item.label}}"
+          controlled
+          value="{{item.value}}"
+        />
+      </wux-cell>
+      <wux-cell @tap="tapPicker" wx:if="{{item.type==='picker'}}" hover-class="none">
+        <wux-input
+          disabled
+          data-key="{{key}}"
+          label="{{item.label}}"
+          controlled
+          value="{{item.value}}"
+        />
+      </wux-cell>
+      <picker
+        wx:if="{{item.type==='date'}}"
+        mode="date"
+        value="{{item.value}}"
+        start="1980-01-01"
+        end="2019-01-01"
+        @change="tapDateChange"
+        data-key="{{key}}"
+      >
+        <wux-cell hover-class="none">
+          <wux-input disabled label="{{item.label}}" controlled value="{{item.value}}"/>
+        </wux-cell>
+      </picker>
+    </block>
+    <!-- <wux-cell wx:if="{{isEdit}}" hover-class="none">
+
+      <wux-input @confirm="onConfirm" label="{{label}}" controlled value="{{value}}"/>
+    </wux-cell>
+    <wux-cell wx:if="{{!isEdit}}" hover-class="none" title="{{label}}" extra="{{value}}"></wux-cell>-->
+  </view>
+</template>
+<script>
+import wepy from 'wepy';
+import { $wuxSelect } from '@/wux/index';
+
+export default class editList extends wepy.component {
+  props = {
+    form: {
+      type: Object,
+      twoWay: true
+    }
+  };
+  data = {
+    baseForm: {
+      sex: ''
+    }
+  };
+  methods = {
+    tapDateChange(e) {
+      let { key } = e.target.dataset;
+      this.form[key].value = e.detail.value;
+      this.$apply();
+    },
+    tapPicker(e) {
+      let { key } = e.target.dataset;
+      let _this = this;
+      $wuxSelect('#wux-select1').open({
+        value: _this.form[key].value,
+        options: _this.form[key].options,
+        onConfirm: (value, index, options) => {
+          console.log('onConfirm', value, index, options);
+          if (index !== -1) {
+            _this.form[key].value = options[index];
+            _this.$apply();
+          }
+        }
+      });
+    },
+    onConfirm(e) {
+      console.log(e);
+      let { value } = e.detail;
+      let { key } = e.target.dataset;
+      this.form[key].value = value;
+      console.log(this.form);
+      this.$parent.$apply();
+    }
+  };
+}
+</script>

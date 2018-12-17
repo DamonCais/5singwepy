@@ -1,0 +1,200 @@
+<template>
+  <view class="container">
+    <view class="home">
+      <!-- swiper -->
+      <view>
+        <swiper
+          indicator-dots="true"
+          autoplay="true"
+          interval="5000"
+          duration="500"
+          indicator-active-color="#ffc452"
+          indicator-color="#efefef"
+          class="swiper"
+        >
+          <block wx:for="{{banner}}" key="item" item="item" wx:key="key">
+            <swiper-item>
+              <image src="{{item.thumb}}" class="slide-image">
+            </swiper-item>
+          </block>
+        </swiper>
+      </view>
+      <view>推荐歌单</view>
+      <view class="recommend-list">
+        <view
+          class="recommend-item"
+          wx:for="{{recommendSongList}}"
+          key="index"
+          @tap="toSong"
+          data-id="{{item.SongListId}}"
+        >
+          <image src="{{item.Picture}}" alt="">
+          <text>{{item.Title}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+</template>
+
+<script>
+import wepy from 'wepy';
+import tip from '@/utils/tip';
+import api from '@/api/api';
+import {
+  icon,
+  SYSTEM_INFO,
+  USER_SPECICAL_INFO,
+  USER_INFO
+} from '@/utils/constant';
+
+export default class home extends wepy.page {
+  config = {
+    navigationBarTitleText: 'home',
+    usingComponents: {}
+  };
+  data = {
+    buttons: [
+      {
+        label: 'player',
+        icon
+      },
+      {
+        label: 'home',
+        icon
+      }
+    ],
+    banner: [],
+    recommendSongList: [],
+    songList: [],
+    mvList: []
+  };
+  components = {};
+
+  onLoad() {
+    this.getBanner();
+    // this.getSongList();
+    // this.getMvlist();
+    this.getRecommendSongList();
+  }
+  async getRecommendSongList() {
+    let res = await api.get(`/getRecommendSongList`);
+    this.recommendSongList = res.data.data;
+    this.$apply();
+  }
+  tapFloatingBtn(e) {
+    let { index } = e.detail;
+    if (index) {
+      wepy.switchTab({ url: '/pages/home' });
+    } else {
+      wepy.switchTab({ url: '/pages/player' });
+    }
+  }
+  async getSongList() {
+    let obj = {
+      pageIndex: 1
+    };
+    let res = await api.get(`/getSongListSquareRecommended`, obj);
+    this.songList = res.data.data;
+    this.$apply();
+  }
+  async getMvlist() {
+    let res = await api.get(`/getMvlist`);
+    this.mvList = res.data.data.list;
+    this.$apply();
+  }
+  async getBanner() {
+    let res = await api.get(`/getBanner`);
+    this.banner = res.data.data;
+    this.$apply();
+  }
+  computed = {};
+  methods = {
+    toSong(e) {
+      let id = e.currentTarget.dataset.id;
+      wepy.navigateTo({
+        url: '/pages/album?id=' + id
+      });
+    }
+  };
+  sleep(s) {
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        resolve('promise resolved');
+      }, s * 1000);
+    });
+  }
+  events = {};
+}
+</script>
+
+<style lang="less">
+.home {
+  .swiper-image {
+    width: 750rpx;
+    height: 300rpx;
+  }
+}
+.recommend-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-around;
+  .recommend-item {
+    width: 250rpx;
+    // height: 280rpx;
+    padding: 5px;
+    box-sizing: border-box;
+    image {
+      width: 225rpx;
+      height: 225rpx;
+    }
+
+    text {
+      display: -webkit-box;
+      font-size: 28rpx;
+      line-height: 40rpx;
+      word-break: break-all;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+}
+.mv-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-around;
+  .mv-item {
+    width: 375rpx;
+    padding: 5px;
+    box-sizing: border-box;
+    position: relative;
+
+    image {
+      width: 360rpx;
+      height: 240rpx;
+    }
+    .mv-info {
+      position: absolute;
+      top: 210rpx;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: space-between;
+      color: #fff;
+      padding: 0 15px;
+      font-size: 10px;
+    }
+    text {
+      display: block;
+      font-size: 12px;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+    .mv-auth {
+      color: #999;
+    }
+  }
+}
+</style>

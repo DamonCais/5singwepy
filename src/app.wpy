@@ -1,0 +1,118 @@
+<style lang="less">
+@import './styles/base';
+@import './styles/icon';
+@import './styles/style';
+@import './styles/flex';
+</style>
+
+
+<script>
+import wepy from 'wepy';
+import 'wepy-async-function';
+
+import { setStore } from 'wepy-redux';
+import configStore from './store';
+
+const store = configStore();
+setStore(store);
+
+export default class extends wepy.app {
+  config = {
+    pages: [
+      // 'pages/index',
+      // 'pages/regiest',
+
+      'pages/home',
+      'pages/player',
+
+      'pages/songlist',
+      'pages/vip',
+
+      'pages/authorize',
+      'pages/search',
+      'pages/message',
+      'pages/location',
+      'pages/classify',
+      'pages/shop_cart',
+      'pages/info',
+      'pages/album'
+    ],
+    window: {
+      backgroundTextStyle: 'light',
+      navigationBarBackgroundColor: '#fff',
+      navigationBarTitleText: 'WeChat',
+      navigationBarTextStyle: 'black'
+    },
+    tabBar: {
+      color: '#999999',
+      selectedColor: '#ff6a3c',
+      backgroundColor: '#ffffff',
+      borderStyle: 'black',
+      list: [
+        {
+          pagePath: 'pages/home',
+          text: '发现音乐'
+        },
+        {
+          pagePath: 'pages/classify',
+          text: '分类'
+        },
+        {
+          pagePath: 'pages/songlist',
+          text: '我的音乐'
+        },
+        // {
+        //   pagePath: 'pages/shop_cart',
+        //   text: '购物车',
+        //   iconPath: 'images/icon_shop_cart.png',
+        //   selectedIconPath: 'images/icon_shop_cart_active.png'
+        // },
+        {
+          pagePath: 'pages/player',
+          text: '播放器'
+        }
+      ]
+    }
+  };
+
+  globalData = {
+    userInfo: null
+  };
+
+  constructor() {
+    super();
+    this.use('requestfix');
+    this.use('promisify');
+  }
+
+  onLaunch() {
+    this.testAsync();
+  }
+
+  sleep(s) {
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        resolve('promise resolved');
+      }, s * 1000);
+    });
+  }
+
+  async testAsync() {
+    const data = await this.sleep(3);
+    console.log(data);
+  }
+
+  getUserInfo(cb) {
+    const that = this;
+    if (this.globalData.userInfo) {
+      return this.globalData.userInfo;
+    }
+    wepy.getUserInfo({
+      success(res) {
+        that.globalData.userInfo = res.userInfo;
+        cb && cb(res.userInfo);
+      }
+    });
+  }
+}
+</script>

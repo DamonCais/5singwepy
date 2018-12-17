@@ -1,0 +1,25 @@
+
+<template>
+  <view>
+    <block wx:for="{{form}}" wx:for-index="key">
+      <wux-cell hover-class="none" title="{{item.label}}" extra="{{item.value}}"></wux-cell>
+    </block>
+    <!-- <wux-cell wx:if="{{isEdit}}" hover-class="none">
+
+      <wux-input @confirm="onConfirm" label="{{label}}" controlled value="{{value}}"/>
+    </wux-cell>
+    <wux-cell wx:if="{{!isEdit}}" hover-class="none" title="{{label}}" extra="{{value}}"></wux-cell>-->
+  </view>
+</template>
+<script>
+import wepy from 'wepy';
+
+export default class showList extends wepy.component {
+  props = {
+    form: {
+      type: Object
+    }
+  };
+  methods = {};
+}
+</script>
